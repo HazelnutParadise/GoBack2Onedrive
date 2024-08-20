@@ -1,7 +1,8 @@
-# GoBack2Onedrive
-Auto backup files to Onedrive.
+# GoBack2Onedrive: Auto backup files to Onedrive.
 
 GoBack2Onedrive 是一個使用 Go 語言編寫的工具，能夠將指定的資料夾壓縮成ZIP文件後上傳到 OneDrive，並且可以根據配置自動清理舊的備份文件。該工具支持分塊上傳大文件，並且會在上傳過程中自動重試直到成功。此工具可以配置為在 Docker 容器中運行，並通過 Docker Compose 定期執行備份操作。
+
+### 贊助我：[PayPal](https://www.paypal.me/tingzhen666)
 
 ## 功能特點
 
