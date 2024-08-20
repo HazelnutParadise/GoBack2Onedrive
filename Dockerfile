@@ -7,4 +7,4 @@ COPY . .
 RUN go mod init GoBack2Onedrive
 RUN go build -o GoBack2Onedrive .
 
-CMD ["/app/GoBack2Onedrive"]
+CMD ["./GoBack2Onedrive"]
