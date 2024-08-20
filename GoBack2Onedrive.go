@@ -227,11 +227,33 @@ func zipFolder(source, target string) error {
 			return err
 		}
 
+		// 忽略符号链接
+		if info.Mode()&os.ModeSymlink != 0 {
+			fmt.Printf("Skipping symlink: %s\n", path)
+			return nil
+		}
+
+		// 检查文件或文件夹是否存在
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			fmt.Printf("Skipping non-existent path: %s\n", path)
+			return nil
+		}
+
+		// 获取相对路径，以便后续比较目录结构
+		relPath := path[len(source):]
+
+		// 排除不需要备份的目录
+		if strings.Contains(relPath, ".Trash") ||
+			strings.Contains(relPath, "lost+found") ||
+			strings.Contains(relPath, "backups") {
+			fmt.Printf("Skipping: %s\n", path)
+			return nil
+		}
+
 		if info.IsDir() {
 			return nil
 		}
 
-		relPath := path[len(source):]
 		zipFile, err := writer.Create(relPath)
 		if err != nil {
 			return err

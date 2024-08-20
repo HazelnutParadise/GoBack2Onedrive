@@ -16,11 +16,10 @@ services:
       - ONEDRIVE_DESTINATION_FOLDER=backups  # OneDrive 上的目标文件夹
       - MAX_BACKUPS=5  # 要保留的最大备份数量
       - BACKUP_SCHEDULE=0 2 * * *  # 设定每天凌晨 2 点备份
-    entrypoint: ["crond", "-f", "-l", "2", "-L", "/app/crontab.log"]
     restart: always
 
     command: >
-      bash -c "
-      /app/GoBack2Onedrive &&
-      echo '$BACKUP_SCHEDULE /app/GoBack2Onedrive' > /etc/crontabs/root &&
+      sh -c "
+      /app/GoBack2Onedrive && \
+      echo '$BACKUP_SCHEDULE /app/GoBack2Onedrive' > /etc/crontabs/root && \
       crond -f"
