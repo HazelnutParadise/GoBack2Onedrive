@@ -411,10 +411,18 @@ func zipFolder(source, target string) error {
 
 // 清空本地的所有備份檔
 func clearLocalBackups(backupDir string) error {
-	err := os.RemoveAll(backupDir)
+	files, err := os.ReadDir(backupDir)
 	if err != nil {
-		return fmt.Errorf("刪除本地備份檔案錯誤: %v", err)
+		return fmt.Errorf("读取目录错误: %v", err)
 	}
+
+	for _, file := range files {
+		err := os.RemoveAll(filepath.Join(backupDir, file.Name()))
+		if err != nil {
+			fmt.Printf("删除文件错误: %v\n", err)
+		}
+	}
+
 	fmt.Println("已成功清空本地備份檔案。")
 	return nil
 }
