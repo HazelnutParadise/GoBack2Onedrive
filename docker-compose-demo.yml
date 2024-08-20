@@ -21,5 +21,6 @@ services:
 
     command: >
       bash -c "
+      /app/GoBack2Onedrive &&
       echo '$BACKUP_SCHEDULE /app/GoBack2Onedrive' > /etc/crontabs/root &&
       crond -f"
