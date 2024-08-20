@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  backup:
+    build: .
+    container_name: goback2onedrive-backup
+    volumes:
+      - /path/to/folder1:/app/data/folder1 # 要備份的資料夾（可無限增加，只要將要備份的資料夾掛載到/app/data/下即可）
+      - /path/to/folder2:/app/data/folder2
+      - /path/to/store/backups:/app/backups # 備份檔案存放位置
+    environment:
+      - ACCESS_TOKEN=您的存取權杖
+      - BACKUP_SCHEDULE=0 2 * * *  # 設定每天凌晨2點備份
+      - ONEDRIVE_DESTINATION_FOLDER=backups  # OneDrive上的目的地資料夾
+    entrypoint: ["crond", "-f", "-l", "2", "-L", "/app/crontab.log"]
+    restart: always
+
+    command: >
+      bash -c "
+      echo '$BACKUP_SCHEDULE /app/GoBack2Onedrive' > /etc/crontabs/root &&
+      crond -f"
