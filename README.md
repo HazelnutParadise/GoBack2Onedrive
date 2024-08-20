@@ -17,7 +17,7 @@ GoBack2Onedrive 是一個使用 Go 語言編寫的工具，能夠將指定的資
 
    ```bash
    git clone https://github.com/HazelnutParadise/GoBack2Onedrive.git
-   cd goback2onedrive
+   cd GoBack2Onedrive
    ```
 
 2. **構建 Docker 映像：**
