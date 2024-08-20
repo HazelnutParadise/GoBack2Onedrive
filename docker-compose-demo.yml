@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   goback2onedrive:
-    build: .
+    image: goback2onedrive:latest
     container_name: goback2onedrive-backup
     volumes:
       - /path/to/folder1:/app/data/folder1 # 要備份的資料夾，可無限增加，只需掛載到 /app/data/ 下即可
