@@ -252,6 +252,7 @@ func zipFolder(source, target string) error {
 
 // 主函数
 func main() {
+	fmt.Println("GoBack2Onedrive program started...")
 	client := OneDriveClient{
 		ClientID:     os.Getenv("CLIENT_ID"),
 		ClientSecret: os.Getenv("CLIENT_SECRET"),
