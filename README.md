@@ -16,7 +16,7 @@ GoBack2Onedrive 是一個使用 Go 語言編寫的工具，能夠將指定的資
 1. **克隆倉庫：**
 
    ```bash
-   git clone https://github.com/yourusername/goback2onedrive.git
+   git clone https://github.com/HazelnutParadise/GoBack2Onedrive.git
    cd goback2onedrive
    ```
 
