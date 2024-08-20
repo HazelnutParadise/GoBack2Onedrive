@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  backup:
+  goback2onedrive:
     build: .
     container_name: goback2onedrive-backup
     volumes:
