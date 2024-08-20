@@ -5,13 +5,17 @@ services:
     build: .
     container_name: goback2onedrive-backup
     volumes:
-      - /path/to/folder1:/app/data/folder1 # 要備份的資料夾（可無限增加，只要將要備份的資料夾掛載到/app/data/下即可）
+      - /path/to/folder1:/app/data/folder1 # 要備份的資料夾，可無限增加，只需掛載到 /app/data/ 下即可
       - /path/to/folder2:/app/data/folder2
-      - /path/to/store/backups:/app/backups # 備份檔案存放位置
+      - /path/to/store/backups:/app/backups # 備份檔的存放位置
     environment:
-      - ACCESS_TOKEN=您的存取權杖
-      - BACKUP_SCHEDULE=0 2 * * *  # 設定每天凌晨2點備份
-      - ONEDRIVE_DESTINATION_FOLDER=backups  # OneDrive上的目的地資料夾
+      - CLIENT_ID=your_client_id
+      - CLIENT_SECRET=your_client_secret
+      - TENANT_ID=your_tenant_id
+      - DRIVE_ID=your_drive_id
+      - ONEDRIVE_DESTINATION_FOLDER=backups  # OneDrive 上的目标文件夹
+      - MAX_BACKUPS=5  # 要保留的最大备份数量
+      - BACKUP_SCHEDULE=0 2 * * *  # 设定每天凌晨 2 点备份
     entrypoint: ["crond", "-f", "-l", "2", "-L", "/app/crontab.log"]
     restart: always
 
