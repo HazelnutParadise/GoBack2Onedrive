@@ -303,10 +303,15 @@ func (client *OneDriveClient) UploadFileInChunks(filePath, oneDriveFolder string
 
 		if resp.StatusCode != http.StatusAccepted && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			return fmt.Errorf("上傳區塊失敗: %v - %s", resp.Status, string(body))
+			fmt.Printf("上傳區塊失敗: %v - %s\n", resp.Status, string(body))
+			// 如果上传失败，等待 10 秒后重试
+			fmt.Println("10 秒后重试上传...")
+			time.Sleep(10 * time.Second)
+			start -= chunkSize // 回退到之前的区块
+			continue
 		}
 
-		fmt.Printf("[上傳進度：%d ]已成功上傳 %d-%d 位元組，共 %d 位元組\n", (end-1)/totalSize*100, start, end-1, totalSize)
+		fmt.Printf("[上傳進度：%d%%]已成功上傳 %d-%d 位元組，共 %d 位元組\n", (end-1)*100/totalSize, start, end-1, totalSize)
 	}
 
 	fmt.Println("檔案上傳完成。")
@@ -404,6 +409,16 @@ func zipFolder(source, target string) error {
 	return err
 }
 
+// 清空本地的所有備份檔
+func clearLocalBackups(backupDir string) error {
+	err := os.RemoveAll(backupDir)
+	if err != nil {
+		return fmt.Errorf("刪除本地備份檔案錯誤: %v", err)
+	}
+	fmt.Println("已成功清空本地備份檔案。")
+	return nil
+}
+
 // 主函數
 func main() {
 	fmt.Println("GoBack2Onedrive program started...")
@@ -446,18 +461,20 @@ func main() {
 	}
 
 	// 分塊上傳壓縮文件
-	err = client.UploadFileInChunks(targetZip, oneDriveFolder)
-	if err != nil {
+	for {
+		err = client.UploadFileInChunks(targetZip, oneDriveFolder)
+		if err == nil {
+			break // 成功上传后退出循环
+		}
 		fmt.Printf("上傳錯誤: %v\n", err)
-		return
+		fmt.Println("10 秒後重試...")
+		time.Sleep(10 * time.Second)
 	}
 
-	// 上傳成功後刪除本機備份文件
-	err = os.Remove(targetZip)
+	// 上傳成功後清空本機備份文件
+	err = clearLocalBackups("/app/backups")
 	if err != nil {
-		fmt.Printf("刪除本機備份檔案錯誤: %v\n", err)
+		fmt.Printf("清空本地備份檔案錯誤: %v\n", err)
 		return
 	}
-
-	fmt.Println("已成功刪除本機備份檔案。")
 }
