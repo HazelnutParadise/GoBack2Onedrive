@@ -437,52 +437,67 @@ func main() {
 		DriveID:      os.Getenv("DRIVE_ID"),
 	}
 
-	sourceDir := "/app/data" // 容器內的 data 資料夾
-	timestamp := time.Now().Format("20060102-150405")
-	targetZip := fmt.Sprintf("/app/backups/backup-%s.zip", timestamp)
+	sourceDir := "/app/data" // 容器內的 data 目錄
 	oneDriveFolder := os.Getenv("ONEDRIVE_DESTINATION_FOLDER")
 	if oneDriveFolder == "" {
-		oneDriveFolder = "backups" // 如果沒有設置，預設儲存到 "backups" 資料夾
+		oneDriveFolder = "backups" // 如果沒有設置，預設儲存到 "backups" 目錄
 	}
 
-	// 從環境變數讀取最大備份數
 	maxBackupsStr := os.Getenv("MAX_BACKUPS")
 	maxBackups, err := strconv.Atoi(maxBackupsStr)
 	if err != nil || maxBackups <= 0 {
 		maxBackups = 5 // 預設保留最多 5 個備份
 	}
 
-	// 壓縮資料夾
-	err = zipFolder(sourceDir, targetZip)
-	if err != nil {
-		fmt.Printf("壓縮資料夾錯誤: %v\n", err)
-		return
+	backupIntervalStr := os.Getenv("BACKUP_INTERVAL")
+	backupInterval, err := strconv.Atoi(backupIntervalStr)
+	if err != nil || backupInterval <= 0 {
+		backupInterval = 1440 // 預設每 1440 分鐘（24 小時）備份一次
 	}
 
-	fmt.Println("資料夾已成功壓縮。")
-
-	// 清理 OneDrive 上的舊備份
-	err = client.CleanOldBackups(oneDriveFolder, maxBackups)
-	if err != nil {
-		fmt.Printf("清理舊備份錯誤: %v\n", err)
-		return
-	}
-
-	// 分塊上傳壓縮文件
 	for {
-		err = client.UploadFileInChunks(targetZip, oneDriveFolder)
-		if err == nil {
-			break // 成功上传后退出循环
-		}
-		fmt.Printf("上傳錯誤: %v\n", err)
-		fmt.Println("10 秒後重試...")
-		time.Sleep(10 * time.Second)
-	}
+		fmt.Println("開始執行備份程序...")
 
-	// 上傳成功後清空本機備份文件
-	err = clearLocalBackups("/app/backups")
-	if err != nil {
-		fmt.Printf("清空本地備份檔案錯誤: %v\n", err)
-		return
+		// 取得目前時間戳記並產生壓縮檔名
+		timestamp := time.Now().Format("20060102-150405")
+		targetZip := fmt.Sprintf("/app/backups/backup-%s.zip", timestamp)
+
+		// 壓縮資料夾
+		err = zipFolder(sourceDir, targetZip)
+		if err != nil {
+			fmt.Printf("壓縮資料夾錯誤: %v\n", err)
+			continue
+		}
+
+		fmt.Println("資料夾已成功壓縮。")
+
+		// 清理 OneDrive 上的舊備份
+		err = client.CleanOldBackups(oneDriveFolder, maxBackups)
+		if err != nil {
+			fmt.Printf("清理舊備份錯誤: %v\n", err)
+			continue
+		}
+
+		// 分塊上傳壓縮文件
+		for {
+			err = client.UploadFileInChunks(targetZip, oneDriveFolder)
+			if err == nil {
+				break // 成功上傳後退出循環
+			}
+			fmt.Printf("上傳錯誤: %v\n", err)
+			fmt.Println("10 秒後重試...")
+			time.Sleep(10 * time.Second)
+		}
+
+		// 上傳成功後清空本機備份文件
+		err = clearLocalBackups("/app/backups")
+		if err != nil {
+			fmt.Printf("清空本地備份檔案錯誤: %v\n", err)
+			continue
+		}
+
+		// 等待下一个备份周期
+		fmt.Printf("備份完成，將在 %d 分鐘後進行下一次備份...\n", backupInterval)
+		time.Sleep(time.Duration(backupInterval) * time.Minute)
 	}
 }

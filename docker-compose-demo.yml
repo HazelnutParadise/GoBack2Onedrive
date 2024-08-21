@@ -15,11 +15,5 @@ services:
       - DRIVE_ID=your_drive_id
       - ONEDRIVE_DESTINATION_FOLDER=goback2onedrive-backups  # OneDrive 上的目標資料夾
       - MAX_BACKUPS=5  # 要保留的最大備份數
-      - BACKUP_SCHEDULE=0 2 * * *  # 設定每天凌晨 2 點備份
+      - BACKUP_INTERVAL=1440  # 每 1440 分鐘 (24 小時) 備份一次
     restart: always
-
-    command: >
-      sh -c "
-      /app/GoBack2Onedrive && \
-      echo '$BACKUP_SCHEDULE /app/GoBack2Onedrive' > /etc/crontabs/root && \
-      crond -f"
