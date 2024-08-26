@@ -336,7 +336,7 @@ func (client *OneDriveClient) CleanOldBackups(oneDriveFolder string, maxBackups 
 		return timeI.Before(timeJ)
 	})
 
-	for i := 0; i < len(backups)-maxBackups; i++ {
+	for i := 0; i <= len(backups)-maxBackups; i++ {
 		err := client.DeleteBackupOnOneDrive(backups[i].Id)
 		if err != nil {
 			fmt.Printf("刪除備份錯誤: %v\n", err)
