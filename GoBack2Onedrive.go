@@ -119,7 +119,7 @@ func (client *OneDriveClient) CreateOneDriveFolder(folderPath string) error {
 	return nil
 }
 
-// 列出 OneDrive 文件夹中的文件
+// 列出 OneDrive 文件夾中的文件
 func (client *OneDriveClient) ListBackupsOnOneDrive(oneDriveFolder string) ([]OneDriveItem, error) {
 	err := client.GetAccessToken()
 	if err != nil {
@@ -151,7 +151,7 @@ func (client *OneDriveClient) ListBackupsOnOneDrive(oneDriveFolder string) ([]On
 				return nil, err
 			}
 			fmt.Println("資料夾已創建，自動重新執行...")
-			return client.ListBackupsOnOneDrive(oneDriveFolder) // 重新运行 List 操作
+			return client.ListBackupsOnOneDrive(oneDriveFolder) // 重新運行 List 操作
 		}
 		return nil, fmt.Errorf("API 請求錯誤: %v - %s", resp.Status, string(body))
 	}
@@ -196,7 +196,7 @@ func (client *OneDriveClient) DeleteBackupOnOneDrive(itemId string) error {
 	return nil
 }
 
-// 创建上传会话
+// 建立上傳會話
 func (client *OneDriveClient) CreateUploadSession(fileName, oneDriveFolder string) (*UploadSession, error) {
 	url := fmt.Sprintf("https://graph.microsoft.com/v1.0/drives/%s/root:/%s/%s:/createUploadSession", client.DriveID, oneDriveFolder, fileName)
 
@@ -241,7 +241,7 @@ func (client *OneDriveClient) CreateUploadSession(fileName, oneDriveFolder strin
 	return &uploadSession, nil
 }
 
-// 分块上传文件
+// 分塊上傳文件
 func (client *OneDriveClient) UploadFileInChunks(filePath, oneDriveFolder string) error {
 	err := client.GetAccessToken()
 	if err != nil {
@@ -304,8 +304,8 @@ func (client *OneDriveClient) UploadFileInChunks(filePath, oneDriveFolder string
 		if resp.StatusCode != http.StatusAccepted && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
 			fmt.Printf("上傳區塊失敗: %v - %s\n", resp.Status, string(body))
-			// 如果上传失败，等待 10 秒后重试
-			fmt.Println("10 秒后重试上传...")
+			// 如果上传失败，等待 10 秒後重試
+			fmt.Println("10 秒後重試上传...")
 			time.Sleep(10 * time.Second)
 			start -= chunkSize // 回退到之前的区块
 			continue
@@ -348,7 +348,7 @@ func (client *OneDriveClient) CleanOldBackups(oneDriveFolder string, maxBackups 
 	return nil
 }
 
-// 壓縮資料夾
+// 壓縮資料夾，保留符號連結和文件權限
 func zipFolder(source, target string) error {
 	zipFile, err := os.Create(target)
 	if err != nil {
@@ -364,34 +364,61 @@ func zipFolder(source, target string) error {
 			return err
 		}
 
-		// 忽略符號連結
-		if info.Mode()&os.ModeSymlink != 0 {
-			fmt.Printf("Skipping symlink: %s\n", path)
-			return nil
-		}
-
-		// 檢查文件或資料夾是否存在
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			fmt.Printf("Skipping non-existent path: %s\n", path)
-			return nil
-		}
-
 		// 取得相對路徑，以便後續比較目錄結構
-		relPath := path[len(source):]
+		relPath := strings.TrimPrefix(path, filepath.Clean(source)+"/")
 
-		// 排除不需要備份的目錄
-		if strings.Contains(relPath, ".Trash") ||
-			strings.Contains(relPath, "lost+found") ||
-			strings.Contains(relPath, "backups") {
-			fmt.Printf("Skipping: %s\n", path)
+		// 保留符號連結
+		if info.Mode()&os.ModeSymlink != 0 {
+			linkTarget, err := os.Readlink(path)
+			if err != nil {
+				return err
+			}
+
+			header := &zip.FileHeader{
+				Name:     relPath,
+				Method:   zip.Store, // 使用存儲模式，以保留符號連結
+				Modified: info.ModTime(),
+			}
+			header.SetMode(info.Mode())
+
+			zipFile, err := writer.CreateHeader(header)
+			if err != nil {
+				return err
+			}
+
+			_, err = zipFile.Write([]byte(linkTarget))
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Added symlink: %s -> %s\n", relPath, linkTarget)
 			return nil
 		}
 
+		// 如果是目錄，僅創建目錄頭信息
 		if info.IsDir() {
+			header, err := zip.FileInfoHeader(info)
+			if err != nil {
+				return err
+			}
+			header.Name = relPath + "/"
+			_, err = writer.CreateHeader(header)
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 
-		zipFile, err := writer.Create(relPath)
+		// 為普通文件創建壓縮文件頭
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+		header.Name = relPath
+		header.Method = zip.Deflate
+		header.SetMode(info.Mode())
+
+		zipFile, err := writer.CreateHeader(header)
 		if err != nil {
 			return err
 		}
@@ -413,13 +440,13 @@ func zipFolder(source, target string) error {
 func clearLocalBackups(backupDir string) error {
 	files, err := os.ReadDir(backupDir)
 	if err != nil {
-		return fmt.Errorf("读取目录错误: %v", err)
+		return fmt.Errorf("讀取目錄錯誤: %v", err)
 	}
 
 	for _, file := range files {
 		err := os.RemoveAll(filepath.Join(backupDir, file.Name()))
 		if err != nil {
-			fmt.Printf("删除文件错误: %v\n", err)
+			fmt.Printf("刪除文件錯誤: %v\n", err)
 		}
 	}
 
@@ -497,7 +524,7 @@ func main() {
 			continue
 		}
 
-		// 等待下一个备份周期
+		// 等待下一个備份週期
 		fmt.Printf("備份完成，將在 %d 分鐘後進行下一次備份...\n", backupInterval)
 		time.Sleep(time.Duration(backupInterval) * time.Minute)
 	}
