@@ -367,6 +367,12 @@ func zipFolder(source, target string) error {
 		// 取得相對路徑，以便後續比較目錄結構
 		relPath := strings.TrimPrefix(path, filepath.Clean(source)+"/")
 
+		// 忽略 .sock 文件
+		if strings.HasSuffix(path, ".sock") {
+			fmt.Printf("Skipping .sock file: %s\n", path)
+			return nil
+		}
+
 		// 保留符號連結
 		if info.Mode()&os.ModeSymlink != 0 {
 			linkTarget, err := os.Readlink(path)
