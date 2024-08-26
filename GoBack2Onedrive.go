@@ -325,7 +325,7 @@ func (client *OneDriveClient) CleanOldBackups(oneDriveFolder string, maxBackups 
 		return err
 	}
 
-	if len(backups) <= maxBackups {
+	if len(backups) < maxBackups {
 		return nil
 	}
 
