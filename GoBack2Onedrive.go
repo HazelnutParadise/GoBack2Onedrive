@@ -466,7 +466,7 @@ func main() {
 		err = zipFolder(sourceDir, targetZip)
 		if err != nil {
 			fmt.Printf("壓縮資料夾錯誤: %v\n", err)
-			continue
+			goto waitNextBackup
 		}
 
 		fmt.Println("資料夾已成功壓縮。")
@@ -489,6 +489,7 @@ func main() {
 			time.Sleep(10 * time.Second)
 		}
 
+	waitNextBackup:
 		// 上傳成功後清空本機備份文件
 		err = clearLocalBackups("/app/backups")
 		if err != nil {
